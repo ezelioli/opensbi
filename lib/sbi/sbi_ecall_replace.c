@@ -18,6 +18,7 @@
 #include <sbi/sbi_timer.h>
 #include <sbi/sbi_tlb.h>
 #include <sbi/sbi_trap.h>
+#include <sbi/sbi_console.h>
 
 static int sbi_ecall_time_handler(unsigned long extid, unsigned long funcid,
 				  const struct sbi_trap_regs *regs,
@@ -25,6 +26,8 @@ static int sbi_ecall_time_handler(unsigned long extid, unsigned long funcid,
 				  struct sbi_trap_info *out_trap)
 {
 	int ret = 0;
+
+	// sbi_printf("[SBI] ECALL to SBI_EXT_TIME_SET_TIMER (0x%lx)\n", (u64)regs->a0);
 
 	if (funcid == SBI_EXT_TIME_SET_TIMER) {
 #if __riscv_xlen == 32

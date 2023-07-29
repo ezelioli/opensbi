@@ -9,6 +9,10 @@
 
 #include <sbi/sbi_irqchip.h>
 #include <sbi/sbi_platform.h>
+#include <sbi/sbi_timer.h>
+#include <sbi/sbi_hart.h>
+#include <sbi_utils/irqchip/clic.h>
+#include <sbi/sbi_console.h>
 
 static int default_irqfn(struct sbi_trap_regs *regs)
 {

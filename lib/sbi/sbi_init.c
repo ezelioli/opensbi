@@ -26,6 +26,7 @@
 #include <sbi/sbi_timer.h>
 #include <sbi/sbi_tlb.h>
 #include <sbi/sbi_version.h>
+#include <sbi_utils/irqchip/clic.h>
 
 #define BANNER                                              \
 	"   ____                    _____ ____ _____\n"     \
@@ -271,7 +272,10 @@ static void __noreturn init_coldboot(struct sbi_scratch *scratch, u32 hartid)
 	if (rc)
 		sbi_hart_hang();
 
+	if(0)
 	sbi_boot_print_banner(scratch);
+
+	sbi_printf("\nOpenSBI v%d.%d\n", OPENSBI_VERSION_MAJOR, OPENSBI_VERSION_MINOR);
 
 	rc = sbi_irqchip_init(scratch, TRUE);
 	if (rc) {
@@ -296,6 +300,16 @@ static void __noreturn init_coldboot(struct sbi_scratch *scratch, u32 hartid)
 	if (rc) {
 		sbi_printf("%s: timer init failed (error %d)\n", __func__, rc);
 		sbi_hart_hang();
+	}
+
+	/* Enable M-mode timer interrupts */
+	sbi_timer_event_start(0xfffffffffffffffful); // set next timer event to `never`
+	if(sbi_hart_has_extension(sbi_scratch_thishart_ptr(), SBI_HART_EXT_CLIC)){
+		// sbi_printf("[SBI] Enabling CLIC M-timer interrupts\n");
+		// clic_set_pend(IRQ_M_TIMER, 0);
+		clic_set_trigger(IRQ_M_TIMER, CLIC_INT_ATTR_TRIG_EDGE);
+		// clic_set_enable(IRQ_M_TIMER, 1);
+		clic_set_priority(IRQ_M_TIMER, 0xFF);
 	}
 
 	rc = sbi_ecall_init();
@@ -335,11 +349,13 @@ static void __noreturn init_coldboot(struct sbi_scratch *scratch, u32 hartid)
 		sbi_hart_hang();
 	}
 
+	if(0){
 	sbi_boot_print_general(scratch);
 
 	sbi_boot_print_domains(scratch);
 
 	sbi_boot_print_hart(scratch, hartid);
+  }
 
 	wake_coldboot_harts(scratch, hartid);
 

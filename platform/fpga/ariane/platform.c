@@ -15,6 +15,7 @@
 #include <sbi_utils/fdt/fdt_fixup.h>
 #include <sbi_utils/ipi/aclint_mswi.h>
 #include <sbi_utils/irqchip/plic.h>
+#include <sbi_utils/irqchip/clic.h>
 #include <sbi_utils/serial/uart8250.h>
 #include <sbi_utils/timer/aclint_mtimer.h>
 
@@ -25,7 +26,9 @@
 #define ARIANE_UART_REG_WIDTH			4
 #define ARIANE_UART_REG_OFFSET			0
 #define ARIANE_PLIC_ADDR			0xc000000
-#define ARIANE_PLIC_NUM_SOURCES			3
+#define ARIANE_PLIC_NUM_SOURCES			30
+#define ARIANE_CLIC_ADDR      0x50000000ul
+#define ARIANE_CLIC_NUM_SOURCES			64
 #define ARIANE_HART_COUNT			1
 #define ARIANE_CLINT_ADDR			0x2000000
 #define ARIANE_ACLINT_MTIMER_FREQ		1000000
@@ -37,6 +40,11 @@
 static struct plic_data plic = {
 	.addr = ARIANE_PLIC_ADDR,
 	.num_src = ARIANE_PLIC_NUM_SOURCES,
+};
+
+static struct clic_data clic = {
+	.addr = ARIANE_CLIC_ADDR,
+	.num_src = ARIANE_CLIC_NUM_SOURCES,
 };
 
 static struct aclint_mswi_data mswi = {
@@ -131,6 +139,9 @@ static int ariane_irqchip_init(bool cold_boot)
 		if (ret)
 			return ret;
 	}
+	ret = clic_init(&clic);
+	if (ret)
+		return ret;
 	return plic_ariane_warm_irqchip_init(2 * hartid, 2 * hartid + 1);
 }
 
@@ -166,6 +177,12 @@ static int ariane_timer_init(bool cold_boot)
 	return aclint_mtimer_warm_init();
 }
 
+static int ariane_clic_delegate(u32 irq)
+{
+	clic_delegate(&clic, irq);
+	return 0;
+}
+
 /*
  * Platform descriptor.
  */
@@ -176,13 +193,15 @@ const struct sbi_platform_operations platform_ops = {
 	.irqchip_init = ariane_irqchip_init,
 	.ipi_init = ariane_ipi_init,
 	.timer_init = ariane_timer_init,
+	.irqctl_delegate = ariane_clic_delegate,
+	// .extensions_init = ariane_clic_init,
 };
 
 const struct sbi_platform platform = {
 	.opensbi_version = OPENSBI_VERSION,
 	.platform_version = SBI_PLATFORM_VERSION(0x0, 0x01),
 	.name = "ARIANE RISC-V",
-	.features = SBI_PLATFORM_DEFAULT_FEATURES,
+	.features = SBI_PLATFORM_HAS_MFAULTS_DELEGATION | SBI_PLATFORM_HAS_CLIC,
 	.hart_count = ARIANE_HART_COUNT,
 	.hart_stack_size = SBI_PLATFORM_DEFAULT_HART_STACK_SIZE,
 	.platform_ops_addr = (unsigned long)&platform_ops

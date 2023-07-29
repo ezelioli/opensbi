@@ -665,6 +665,12 @@ __mhpm_skip:
 		__sbi_hart_update_extension(hfeatures,
 					SBI_HART_EXT_AIA, true);
 
+	/* Detect if hart has CLIC local interrupt CSRs */
+	csr_read_allowed(CSR_MTVT, (unsigned long)&trap);
+	if (!trap.cause)
+		__sbi_hart_update_extension(hfeatures,
+					SBI_HART_EXT_CLIC, true);
+
 	/* Detect if hart supports stimecmp CSR(Sstc extension) */
 	if (hfeatures->priv_version >= SBI_HART_PRIV_VER_1_12) {
 		csr_read_allowed(CSR_STIMECMP, (unsigned long)&trap);

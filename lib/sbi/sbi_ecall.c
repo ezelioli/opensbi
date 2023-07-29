@@ -103,6 +103,7 @@ int sbi_ecall_handler(struct sbi_trap_regs *regs)
 	bool is_0_1_spec = 0;
 
 	ext = sbi_ecall_find_extension(extension_id);
+	// sbi_printf("[SBI] ECALL to extension 0x%lx, func_id : 0x%lx\n", extension_id, func_id);
 	if (ext && ext->handle) {
 		ret = ext->handle(extension_id, func_id,
 				  regs, &out_val, &trap);
@@ -110,6 +111,7 @@ int sbi_ecall_handler(struct sbi_trap_regs *regs)
 		    extension_id <= SBI_EXT_0_1_SHUTDOWN)
 			is_0_1_spec = 1;
 	} else {
+		sbi_printf("[SBI] ECALL to unsupported extension\n");
 		ret = SBI_ENOTSUPP;
 	}
 
@@ -171,6 +173,9 @@ int sbi_ecall_init(void)
 	if (ret)
 		return ret;
 	ret = sbi_ecall_register_extension(&ecall_vendor);
+	if (ret)
+		return ret;
+	ret = sbi_ecall_register_extension(&ecall_clic);
 	if (ret)
 		return ret;
 

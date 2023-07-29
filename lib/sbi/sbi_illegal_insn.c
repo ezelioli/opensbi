@@ -25,6 +25,8 @@ static int truly_illegal_insn(ulong insn, struct sbi_trap_regs *regs)
 {
 	struct sbi_trap_info trap;
 
+	sbi_printf("[SBI] Truly illegal instruction (mepc = 0x%lx)\n", regs->mepc);
+
 	trap.epc = regs->mepc;
 	trap.cause = CAUSE_ILLEGAL_INSTRUCTION;
 	trap.tval = insn;
@@ -63,6 +65,8 @@ static int system_opcode_insn(ulong insn, struct sbi_trap_regs *regs)
 
 	if (sbi_emulate_csr_read(csr_num, regs, &csr_val))
 		return truly_illegal_insn(insn, regs);
+
+	// sbi_printf("[SBI] Emulated CSR read to CSR 0x%x (val = 0x%lx)\n", (unsigned int)csr_num, csr_val);
 
 	do_write = rs1_num;
 	switch (GET_RM(insn)) {
@@ -155,10 +159,13 @@ int sbi_illegal_insn_handler(ulong insn, struct sbi_trap_regs *regs)
 		insn = sbi_get_insn(regs->mepc, &uptrap);
 		if (uptrap.cause) {
 			uptrap.epc = regs->mepc;
+			// sbi_printf("[SBI] Illegal instruction redirection\n");
 			return sbi_trap_redirect(regs, &uptrap);
 		}
 		if ((insn & 3) != 3)
 			return truly_illegal_insn(insn, regs);
+	} else {
+		// sbi_printf("[SBI] Illegal instruction: not unlikely\n");
 	}
 
 	return illegal_insn_table[(insn & 0x7c) >> 2](insn, regs);

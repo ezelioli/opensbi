@@ -225,7 +225,7 @@ _bss_zero:
 	blt	s4, s5, _bss_zero
 
 	/* Setup temporary trap handler */
-	lla	s4, _start_hang
+	lla	s4, _start_hang_2
 	csrw	CSR_MTVEC, s4
 
 	/* Setup temporary stack */
@@ -455,7 +455,7 @@ _start_warm:
 	blt	a4, s7, 1b
 	li	a4, -1
 2:	add	s6, a4, zero
-3:	bge	s6, s7, _start_hang
+3:	bge	s6, s7, _start_hang_3
 
 	/* Find the scratch space based on HART index */
 	lla	tp, _fw_end
@@ -553,6 +553,18 @@ _hartid_to_scratch:
 _start_hang:
 	wfi
 	j	_start_hang
+
+	.align 3
+	.globl _start_hang_2
+_start_hang_2:
+	wfi
+	j	_start_hang_2
+
+	.align 3
+	.globl _start_hang_3
+_start_hang_3:
+	wfi
+	j	_start_hang_3
 
 	.section .entry, "ax", %progbits
 	.align 3
@@ -739,7 +751,7 @@ memcmp:
 .endm
 
 	.section .entry, "ax", %progbits
-	.align 3
+	.align 8 ///// ALIGNMENT REQUIRED TO 64B FOR CLIC MODE (update: for some in CVA6 is 256B)
 	.globl _trap_handler
 	.globl _trap_exit
 _trap_handler:

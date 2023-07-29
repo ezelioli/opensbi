@@ -16,6 +16,7 @@
 #include <sbi/sbi_hartmask.h>
 #include <sbi/sbi_ipi.h>
 #include <sbi/sbi_timer.h>
+#include <sbi/sbi_console.h>
 #include <sbi_utils/timer/aclint_mtimer.h>
 
 static struct aclint_mtimer_data *mtimer_hartid2data[SBI_HARTMASK_MAX_BITS];
@@ -75,6 +76,8 @@ static void mtimer_event_start(u64 next_event)
 	u32 target_hart = current_hartid();
 	struct aclint_mtimer_data *mt = mtimer_hartid2data[target_hart];
 	u64 *time_cmp = (void *)mt->mtimecmp_addr;
+
+	// sbi_printf("[SBI] ACLINT writing 0x%lx to mtimecmp\n", next_event);
 
 	/* Program MTIMER Time Compare */
 	mt->time_wr(true, next_event,
