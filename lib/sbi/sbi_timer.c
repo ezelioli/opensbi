@@ -138,7 +138,12 @@ void sbi_timer_event_start(u64 next_event)
 		csr_clear(CSR_MIP, MIP_STIP);
 	}
 	if (sbi_hart_has_extension(sbi_scratch_thishart_ptr(), SBI_HART_EXT_CLIC)) {
-		clic_set_enable(IRQ_M_TIMER, 1);
+			ulong mtvec = csr_read(CSR_MTVEC);
+			if ((mtvec & 0x03ull) == 0x03ull){
+				clic_set_enable(IRQ_M_TIMER, 1);
+			} else {
+				csr_set(CSR_MIE, MIP_MTIP);
+			}
 	} else {
 		csr_set(CSR_MIE, MIP_MTIP);
 	}
