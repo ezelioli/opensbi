@@ -66,6 +66,8 @@ void clic_set_enable(u32 irq, bool en);
 void clic_set_pend(u32 irq, bool pending);
 void clic_set_priority(u32 irq, u8 prio);
 void clic_set_trigger(u32 irq, clic_intattr_trig_t trig);
+void clic_send_ipi(u32 target_hart);
+void clic_clear_ipi(u32 target_hart);
 unsigned long clic_get_num_sources();
 int clic_init(const struct clic_data* clic);
 

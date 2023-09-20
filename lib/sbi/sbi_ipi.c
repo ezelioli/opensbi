@@ -22,6 +22,8 @@
 #include <sbi/sbi_pmu.h>
 #include <sbi/sbi_string.h>
 #include <sbi/sbi_tlb.h>
+#include <sbi_utils/irqchip/clic.h>
+#include <sbi/sbi_console.h>
 
 struct sbi_ipi_data {
 	unsigned long ipi_type;
@@ -141,7 +143,15 @@ void sbi_ipi_event_destroy(u32 event)
 
 static void sbi_ipi_process_smode(struct sbi_scratch *scratch)
 {
-	csr_set(CSR_MIP, MIP_SSIP);
+	ulong mtvec = csr_read(CSR_MTVEC);
+	if ((mtvec & 0x03ull) == 0x03ull){
+		// sbi_printf("[SBI] IPI inject\n");
+		clic_set_pend(IRQ_S_SOFT, 1);
+		// clic_set_pend(IRQ_VS_SOFT, 1);
+	} else {
+		// sbi_printf("Sending S-mode IPI in CLINT mode\n");
+		csr_set(CSR_MIP, MIP_SSIP);
+	}
 }
 
 static struct sbi_ipi_event_ops ipi_smode_ops = {
@@ -153,12 +163,19 @@ static u32 ipi_smode_event = SBI_IPI_EVENT_MAX;
 
 int sbi_ipi_send_smode(ulong hmask, ulong hbase)
 {
+	// sbi_printf("[SBI] Sending IPI to S-mode\n");
 	return sbi_ipi_send_many(hmask, hbase, ipi_smode_event, NULL);
 }
 
 void sbi_ipi_clear_smode(void)
 {
-	csr_clear(CSR_MIP, MIP_SSIP);
+	ulong mtvec = csr_read(CSR_MTVEC);
+	if ((mtvec & 0x03ull) == 0x03ull){
+		// sbi_printf("Clearing S-mode IPI in CLIC mode\n");
+		clic_set_pend(IRQ_S_SOFT, 0);
+	} else {
+		csr_clear(CSR_MIP, MIP_SSIP);
+	}
 }
 
 static void sbi_ipi_process_halt(struct sbi_scratch *scratch)
@@ -272,7 +289,12 @@ int sbi_ipi_init(struct sbi_scratch *scratch, bool cold_boot)
 void sbi_ipi_exit(struct sbi_scratch *scratch)
 {
 	/* Disable software interrupts */
-	csr_clear(CSR_MIE, MIP_MSIP);
+	ulong mtvec = csr_read(CSR_MTVEC);
+	if ((mtvec & 0x03ull) == 0x03ull){
+		clic_set_enable(IRQ_M_SOFT, 0);
+	} else {
+		csr_clear(CSR_MIE, MIP_MSIP);
+	}
 
 	/* Process pending IPIs */
 	sbi_ipi_process();

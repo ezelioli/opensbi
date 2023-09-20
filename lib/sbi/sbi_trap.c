@@ -202,6 +202,7 @@ static int sbi_trap_nonaia_irq(struct sbi_trap_regs *regs, ulong mcause)
 		sbi_timer_process();
 		break;
 	case IRQ_M_SOFT:
+		// sbi_printf("[SBI] IPI received\n");
 		sbi_ipi_process();
 		break;
 	case IRQ_M_EXT:
@@ -219,12 +220,15 @@ static int sbi_trap_clic_irq(struct sbi_trap_regs *regs, ulong mcause)
 	switch (mcause & 0x0FFull) {
 	case IRQ_M_TIMER:
 		// sbi_printf("[SBI] M-timer irq in CLIC mode\n");
+		// sbi_printf("[SBI] timer\n");
 		clic_set_enable(IRQ_M_TIMER, 0);
 		// clic_set_pend(IRQ_M_TIMER, 0);
 		clic_set_pend(IRQ_S_TIMER, 1);
 		// sbi_timer_process();
 		break;
 	case IRQ_M_SOFT:
+		// sbi_printf("[SBI] IPI received in CLIC mode\n");
+		// sbi_printf("[SBI] IPI\n");
 		sbi_ipi_process();
 		break;
 	case IRQ_M_EXT:

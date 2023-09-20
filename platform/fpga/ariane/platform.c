@@ -10,6 +10,7 @@
 #include <sbi/sbi_console.h>
 #include <sbi/sbi_const.h>
 #include <sbi/sbi_hart.h>
+#include <sbi/sbi_ipi.h>
 #include <sbi/sbi_platform.h>
 #include <sbi_utils/fdt/fdt_helper.h>
 #include <sbi_utils/fdt/fdt_fixup.h>
@@ -66,6 +67,12 @@ static struct aclint_mtimer_data mtimer = {
 	.hart_count = ARIANE_HART_COUNT,
 	.has_64bit_mmio = TRUE,
 };
+
+// static struct sbi_ipi_device ariane_ipi_dev = {
+// 	.name = "clic-ipi",
+// 	.ipi_send = clic_send_ipi,
+// 	.ipi_clear = clic_clear_ipi
+// };
 
 /*
  * Ariane platform early initialization.
@@ -156,6 +163,8 @@ static int ariane_ipi_init(bool cold_boot)
 		ret = aclint_mswi_cold_init(&mswi);
 		if (ret)
 			return ret;
+		clic_set_enable(IRQ_M_SOFT, 1);
+		clic_set_priority(IRQ_M_SOFT, 255);
 	}
 
 	return aclint_mswi_warm_init();

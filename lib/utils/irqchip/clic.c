@@ -1,6 +1,7 @@
 #include <sbi/riscv_asm.h>
 #include <sbi/sbi_hartmask.h>
 #include <sbi_utils/irqchip/clic.h>
+#include <sbi/sbi_console.h>
 
 #define CLIC_CLICCFG_OFFSET          0x0000000ul
 #define CLIC_CLICINT_OFFSET(i)      (0x0001000ul + 4*(i))
@@ -128,11 +129,22 @@ void clic_delegate(const struct clic_data* clic, u32 irq)
     .ip        = CLIC_IP_CLEAR,
     .ie        = CLIC_IE_MASK,
     .attr.shv  = CLIC_INT_ATTR_SHV_OFF,
-    .attr.trig = CLIC_INT_ATTR_TRIG_LVL,
+    .attr.trig = CLIC_INT_ATTR_TRIG_EDGE, // CLIC_INT_ATTR_TRIG_LVL,
     .attr.mode = CLIC_INT_ATTR_MODE_S,
     .ctl       = 0x00
   };
   clic_set_clicint(clic, irq, cfg);
+}
+
+void clic_send_ipi(u32 target_hart)
+{
+  sbi_printf("[SBI] Writing CLIC IP 1\n");
+  clic_set_pend(1, 1);
+}
+
+void clic_clear_ipi(u32 target_hart)
+{
+  clic_set_pend(1, 0);
 }
 
 unsigned long clic_get_num_sources()
