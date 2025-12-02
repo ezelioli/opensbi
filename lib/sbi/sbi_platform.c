@@ -22,6 +22,9 @@ static inline char *sbi_platform_feature_id2string(unsigned long feature)
 	case SBI_PLATFORM_HAS_MFAULTS_DELEGATION:
 		fstr = "medeleg";
 		break;
+	case SBI_PLATFORM_HAS_CLIC:
+		fstr = "clic";
+		break;
 	default:
 		break;
 	}

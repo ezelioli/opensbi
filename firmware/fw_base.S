@@ -634,7 +634,7 @@ memcmp:
 .endm
 
 	.section .entry, "ax", %progbits
-	.align 3
+	.align 8 ///// ALIGNMENT REQUIRED TO 256B FOR CLIC MODE
 	.globl _trap_handler
 _trap_handler:
 	TRAP_SAVE_AND_SETUP_SP_T0
@@ -656,7 +656,7 @@ _trap_handler:
 	mret
 
 	.section .entry, "ax", %progbits
-	.align 3
+	.align 8 ///// ALIGNMENT REQUIRED TO 256B FOR CLIC MODE
 	.globl _trap_handler_hyp
 _trap_handler_hyp:
 	TRAP_SAVE_AND_SETUP_SP_T0

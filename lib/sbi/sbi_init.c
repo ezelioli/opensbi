@@ -32,6 +32,7 @@
 #include <sbi/sbi_tlb.h>
 #include <sbi/sbi_version.h>
 #include <sbi/sbi_unit_test.h>
+#include <sbi_utils/irqchip/clic.h>
 
 #define BANNER                                              \
 	"   ____                    _____ ____ _____\n"     \
@@ -321,6 +322,13 @@ static void __noreturn init_coldboot(struct sbi_scratch *scratch, u32 hartid)
 		sbi_printf("%s: mpxy init failed (error %d)\n", __func__, rc);
 		sbi_hart_hang();
 	}
+
+	sbi_timer_event_start(0xfffffffffffffffful); // set next timer event to `never`
+	if(sbi_hart_has_extension(sbi_scratch_thishart_ptr(), SBI_HART_EXT_CLIC)){
+		clic_set_trigger(IRQ_M_TIMER, CLIC_INT_ATTR_TRIG_EDGE);
+		clic_set_priority(IRQ_M_TIMER, 0xFF);
+	}
+
 	/*
 	 * Note: Finalize domains after HSM initialization so that we
 	 * can startup non-root domains.

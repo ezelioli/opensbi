@@ -23,6 +23,7 @@
 #include <sbi/sbi_sse.h>
 #include <sbi/sbi_timer.h>
 #include <sbi/sbi_trap.h>
+#include <sbi_utils/irqchip/clic.h>
 
 static void sbi_trap_error_one(const struct sbi_trap_context *tcntx,
 			       const char *prefix, u32 hartid, u32 depth)
@@ -251,6 +252,26 @@ static int sbi_trap_nonaia_irq(unsigned long irq)
 	return 0;
 }
 
+static int sbi_trap_clic_irq(ulong mcause)
+{
+	mcause &= ~(1UL << (__riscv_xlen - 1));
+	switch (mcause & 0x0FFull) {
+	case IRQ_M_TIMER:
+		clic_set_enable(IRQ_M_TIMER, 0);
+		clic_set_pend(IRQ_S_TIMER, 1);
+		break;
+	case IRQ_M_SOFT:
+		sbi_ipi_process();
+		break;
+	case IRQ_M_EXT:
+		return sbi_irqchip_process();
+	default:
+		return SBI_ENOENT;
+	};
+
+	return 0;
+}
+
 static int sbi_trap_aia_irq(void)
 {
 	int rc;
@@ -310,17 +331,27 @@ struct sbi_trap_context *sbi_trap_handler(struct sbi_trap_context *tcntx)
 	tcntx->prev_context = sbi_trap_get_context(scratch);
 	sbi_trap_set_context(scratch, tcntx);
 
+	mcause &= ((1UL << (__riscv_xlen - 1)) | 0x0FFFUL);
+
 	if (mcause & MCAUSE_IRQ_MASK) {
 		if (sbi_hart_has_extension(sbi_scratch_thishart_ptr(),
 					   SBI_HART_EXT_SMAIA))
 			rc = sbi_trap_aia_irq();
+		else if (sbi_hart_has_extension(sbi_scratch_thishart_ptr(), SBI_HART_EXT_CLIC)){
+			ulong mtvec = csr_read(CSR_MTVEC);
+			if ((mtvec & 0x03ull) == 0x03ull){
+				rc = sbi_trap_clic_irq(mcause);
+			}
+			else
+				rc = sbi_trap_nonaia_irq(mcause);
+		}
 		else
 			rc = sbi_trap_nonaia_irq(mcause & ~MCAUSE_IRQ_MASK);
 		msg = "unhandled local interrupt";
 		goto trap_done;
 	}
 
-	switch (mcause) {
+	switch (mcause & 0x0FFul) {
 	case CAUSE_ILLEGAL_INSTRUCTION:
 		rc  = sbi_illegal_insn_handler(tcntx);
 		msg = "illegal instruction handler failed";
