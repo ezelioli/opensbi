@@ -138,7 +138,7 @@ void clic_delegate(const struct clic_data* clic, u32 irq)
 
 void clic_send_ipi(u32 target_hart)
 {
-  sbi_printf("[SBI] Writing CLIC IP 1\n");
+  // sbi_printf("[SBI] Writing CLIC IP 1\n");
   clic_set_pend(1, 1);
 }
 
