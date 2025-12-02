@@ -272,7 +272,10 @@ static void __noreturn init_coldboot(struct sbi_scratch *scratch, u32 hartid)
 	if (rc)
 		sbi_hart_hang();
 
+	if(0)
 	sbi_boot_print_banner(scratch);
+
+	sbi_printf("\nOpenSBI v%d.%d\n", OPENSBI_VERSION_MAJOR, OPENSBI_VERSION_MINOR);
 
 	rc = sbi_irqchip_init(scratch, TRUE);
 	if (rc) {
@@ -343,11 +346,13 @@ static void __noreturn init_coldboot(struct sbi_scratch *scratch, u32 hartid)
 		sbi_hart_hang();
 	}
 
+	if(0){
 	sbi_boot_print_general(scratch);
 
 	sbi_boot_print_domains(scratch);
 
 	sbi_boot_print_hart(scratch, hartid);
+  }
 
 	wake_coldboot_harts(scratch, hartid);
 
