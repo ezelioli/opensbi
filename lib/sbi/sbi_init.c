@@ -26,6 +26,7 @@
 #include <sbi/sbi_timer.h>
 #include <sbi/sbi_tlb.h>
 #include <sbi/sbi_version.h>
+#include <sbi_utils/irqchip/clic.h>
 
 #define BANNER                                              \
 	"   ____                    _____ ____ _____\n"     \
@@ -300,6 +301,13 @@ static void __noreturn init_coldboot(struct sbi_scratch *scratch, u32 hartid)
 	if (rc) {
 		sbi_printf("%s: timer init failed (error %d)\n", __func__, rc);
 		sbi_hart_hang();
+	}
+
+	/* Set up M-mode timer interrupts */
+	sbi_timer_event_start(0xfffffffffffffffful); // set next timer event to `never`
+	if(sbi_hart_has_extension(sbi_scratch_thishart_ptr(), SBI_HART_EXT_CLIC)){
+		clic_set_trigger(IRQ_M_TIMER, CLIC_INT_ATTR_TRIG_EDGE);
+		clic_set_priority(IRQ_M_TIMER, 0xFF);
 	}
 
 	rc = sbi_ecall_init();

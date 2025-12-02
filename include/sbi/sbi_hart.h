@@ -32,6 +32,8 @@ enum sbi_hart_extensions {
 	SBI_HART_EXT_TIME,
 	/** HART has AIA M-mode CSRs */
 	SBI_HART_EXT_SMAIA,
+	/** HART has CLIC CSRs (extension name not available) */
+	SBI_HART_EXT_CLIC,
 	/** HART has Smstateen CSR **/
 	SBI_HART_EXT_SMSTATEEN,
 	/** HART has Sstc extension */
