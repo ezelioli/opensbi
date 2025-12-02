@@ -734,7 +734,7 @@ memcmp:
 .endm
 
 	.section .entry, "ax", %progbits
-	.align 3
+	.align 8 ///// ALIGNMENT REQUIRED TO 64B FOR CLIC MODE (update: for some in CVA6 is 256B)
 	.globl _trap_handler
 	.globl _trap_exit
 _trap_handler:

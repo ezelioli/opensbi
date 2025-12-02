@@ -889,6 +889,9 @@ __pmp_skip:
 	/* Detect if hart has AIA local interrupt CSRs */
 	__check_ext_csr(SBI_HART_PRIV_VER_UNKNOWN,
 			CSR_MTOPI, SBI_HART_EXT_SMAIA);
+	/* Detect if hart has CLIC local interrupt CSRs */
+	__check_ext_csr(SBI_HART_PRIV_VER_UNKNOWN,
+			CSR_MTVT, SBI_HART_EXT_CLIC);
 	/* Detect if hart supports stimecmp CSR(Sstc extension) */
 	__check_ext_csr(SBI_HART_PRIV_VER_1_12,
 			CSR_STIMECMP, SBI_HART_EXT_SSTC);

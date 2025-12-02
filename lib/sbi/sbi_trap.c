@@ -22,6 +22,7 @@
 #include <sbi/sbi_scratch.h>
 #include <sbi/sbi_timer.h>
 #include <sbi/sbi_trap.h>
+#include <sbi_utils/irqchip/clic.h>
 
 static void __noreturn sbi_trap_error(const char *msg, int rc,
 				      ulong mcause, ulong mtval, ulong mtval2,
@@ -217,6 +218,26 @@ static int sbi_trap_nonaia_irq(struct sbi_trap_regs *regs, ulong mcause)
 	return 0;
 }
 
+static int sbi_trap_clic_irq(struct sbi_trap_regs *regs, ulong mcause)
+{
+	mcause &= ~(1UL << (__riscv_xlen - 1));
+	switch (mcause & 0x0FFull) {
+	case IRQ_M_TIMER:
+		clic_set_enable(IRQ_M_TIMER, 0);
+		clic_set_pend(IRQ_S_TIMER, 1);
+		break;
+	case IRQ_M_SOFT:
+		sbi_ipi_process();
+		break;
+	case IRQ_M_EXT:
+		return sbi_irqchip_process(regs);
+	default:
+		return SBI_ENOENT;
+	};
+
+	return 0;
+}
+
 static int sbi_trap_aia_irq(struct sbi_trap_regs *regs, ulong mcause)
 {
 	int rc;
@@ -273,10 +294,20 @@ struct sbi_trap_regs *sbi_trap_handler(struct sbi_trap_regs *regs)
 		mtinst = csr_read(CSR_MTINST);
 	}
 
+	mcause &= ((1UL << (__riscv_xlen - 1)) | 0x0FFFUL);
+
 	if (mcause & (1UL << (__riscv_xlen - 1))) {
 		if (sbi_hart_has_extension(sbi_scratch_thishart_ptr(),
 					   SBI_HART_EXT_SMAIA))
 			rc = sbi_trap_aia_irq(regs, mcause);
+		else if (sbi_hart_has_extension(sbi_scratch_thishart_ptr(), SBI_HART_EXT_CLIC)){
+			ulong mtvec = csr_read(CSR_MTVEC);
+			if ((mtvec & 0x03ull) == 0x03ull){
+				rc = sbi_trap_clic_irq(regs, mcause);
+			}
+			else
+				rc = sbi_trap_nonaia_irq(regs, mcause);
+		}
 		else
 			rc = sbi_trap_nonaia_irq(regs, mcause);
 		if (rc) {
@@ -286,7 +317,7 @@ struct sbi_trap_regs *sbi_trap_handler(struct sbi_trap_regs *regs)
 		return regs;
 	}
 
-	switch (mcause) {
+	switch (mcause & 0x0FFul) {
 	case CAUSE_ILLEGAL_INSTRUCTION:
 		rc  = sbi_illegal_insn_handler(mtval, regs);
 		msg = "illegal instruction handler failed";
@@ -308,6 +339,7 @@ struct sbi_trap_regs *sbi_trap_handler(struct sbi_trap_regs *regs)
 	case CAUSE_STORE_ACCESS:
 		sbi_pmu_ctr_incr_fw(mcause == CAUSE_LOAD_ACCESS ?
 			SBI_PMU_FW_ACCESS_LOAD : SBI_PMU_FW_ACCESS_STORE);
+		sbi_printf("[SBI] Access fault : cause = %lx, epc = %lx, tval = %lx, tinst = %lx\n", mcause, regs->mepc, mtval, mtinst);
 		/* fallthrough */
 	default:
 		/* If the trap came from S or U mode, redirect it there */

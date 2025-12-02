@@ -58,9 +58,10 @@ struct sbi_hart_features;
 enum sbi_platform_features {
 	/** Platform has fault delegation support */
 	SBI_PLATFORM_HAS_MFAULTS_DELEGATION = (1 << 1),
+	SBI_PLATFORM_HAS_CLIC               = (1 << 2),
 
 	/** Last index of Platform features*/
-	SBI_PLATFORM_HAS_LAST_FEATURE = SBI_PLATFORM_HAS_MFAULTS_DELEGATION,
+	SBI_PLATFORM_HAS_LAST_FEATURE = SBI_PLATFORM_HAS_CLIC,
 };
 
 /** Default feature set for a platform */
@@ -139,6 +140,8 @@ struct sbi_platform_operations {
 	int (*vendor_ext_provider)(long funcid,
 				   struct sbi_trap_regs *regs,
 				   struct sbi_ecall_return *out);
+
+	int (*irqctl_delegate)(u32 irq);
 };
 
 /** Platform default per-HART stack size for exception/interrupt handling */
@@ -674,6 +677,23 @@ static inline int sbi_platform_vendor_ext_provider(
 
 	return SBI_ENOTSUPP;
 }
+
+/**
+ * Delegate interrupt in CLIC for current HART
+ *
+ * @param plat pointer to struct sbi_platform
+ * @param irq interrupt source to delegate
+ *
+ * @return 0 on success and negative error code on failure
+ */
+static inline int sbi_platform_irqctl_delegate(const struct sbi_platform *plat,
+					  u32 irq)
+{
+	if (plat && sbi_platform_ops(plat)->irqctl_delegate)
+		return sbi_platform_ops(plat)->irqctl_delegate(irq);
+	return 0;
+}
+
 
 #endif
 
