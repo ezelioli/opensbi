@@ -233,6 +233,15 @@ enum sbi_pmu_ctr_type {
 #define SBI_EXT_FIRMWARE_START			0x0A000000
 #define SBI_EXT_FIRMWARE_END			0x0AFFFFFF
 
+
+// SBI CLIC extension ID range
+#define SBI_EXT_CLIC_START 0x0A000000
+#define SBI_EXT_CLIC_END   0x0AFFFFFF
+// CLIC extension FuncID
+#define SBI_EXT_CLIC_ENABLE 0x0
+#define SBI_EXT_CLIC_DELEGATE 0x1
+#define SBI_EXT_CLIC_GET_NUMSRCS 0x2
+
 /* SBI return error codes */
 #define SBI_SUCCESS				0
 #define SBI_ERR_FAILED				-1

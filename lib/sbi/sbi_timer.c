@@ -17,6 +17,7 @@
 #include <sbi/sbi_pmu.h>
 #include <sbi/sbi_scratch.h>
 #include <sbi/sbi_timer.h>
+#include <sbi_utils/irqchip/clic.h>
 
 static unsigned long time_delta_off;
 static u64 (*get_time_val)(void);
@@ -135,7 +136,16 @@ void sbi_timer_event_start(u64 next_event)
 		timer_dev->timer_event_start(next_event);
 		csr_clear(CSR_MIP, MIP_STIP);
 	}
-	csr_set(CSR_MIE, MIP_MTIP);
+	if (sbi_hart_has_extension(sbi_scratch_thishart_ptr(), SBI_HART_EXT_CLIC)) {
+			ulong mtvec = csr_read(CSR_MTVEC);
+			if ((mtvec & 0x03ull) == 0x03ull){
+				clic_set_enable(IRQ_M_TIMER, 1);
+			} else {
+				csr_set(CSR_MIE, MIP_MTIP);
+			}
+	} else {
+		csr_set(CSR_MIE, MIP_MTIP);
+	}
 }
 
 void sbi_timer_process(void)

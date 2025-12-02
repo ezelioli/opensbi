@@ -22,3 +22,4 @@ libsbiutils-objs-y += irqchip/fdt_irqchip_plic.o
 libsbiutils-objs-y += irqchip/aplic.o
 libsbiutils-objs-y += irqchip/imsic.o
 libsbiutils-objs-y += irqchip/plic.o
+libsbiutils-objs-y += irqchip/clic.o

@@ -688,6 +688,9 @@
 #define CSR_MVIEN			0x308
 #define CSR_MVIP			0x309
 
+/* Machine-Level Interrupts (CLIC) */
+#define CSR_MTVT      0x307
+
 /* Smstateen extension registers */
 /* Machine stateen CSRs */
 #define CSR_MSTATEEN0			0x30C
