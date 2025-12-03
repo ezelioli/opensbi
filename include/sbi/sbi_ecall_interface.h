@@ -473,8 +473,8 @@ enum sbi_sse_state {
 
 
 // SBI CLIC extension ID range
-#define SBI_EXT_CLIC_START 0x0A000000
-#define SBI_EXT_CLIC_END   0x0AFFFFFF
+#define SBI_EXT_CLIC_START 0x0B000000
+#define SBI_EXT_CLIC_END   0x0BFFFFFF
 // CLIC extension FuncID
 #define SBI_EXT_CLIC_ENABLE 0x0
 #define SBI_EXT_CLIC_DELEGATE 0x1
